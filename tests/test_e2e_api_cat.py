@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 import time
 import json
+from uuid import uuid4
 
 client = TestClient(app)
 # NO USAMOS setup_function aquí, ya que queremos simular un entorno persistente
@@ -38,3 +39,35 @@ def test_e2e_full_category_lifecycle():
     # E2E Assertions:
     assert len(final_list) == initial_count + 1
     assert any(c['nombre'] == cat_name for c in final_list)
+
+
+def test_e2e_create_category_and_product():
+    cat_name = f"E2E Hogar {uuid4().hex}"
+    product_name = f"Lámpara {uuid4().hex}"
+
+    response_cat = client.post("/categorias", params={"nombre": cat_name})
+    assert response_cat.status_code == 200
+    categoria_creada = response_cat.json()
+
+    response_prod = client.post(
+        "/productos",
+        params={"nombre": product_name, "categoria_id": categoria_creada["id"]},
+    )
+
+    assert response_prod.status_code == 200
+    producto_creado = response_prod.json()
+    assert producto_creado["id"] > 0
+    assert producto_creado["nombre"] == product_name
+    assert producto_creado["categoria_id"] == categoria_creada["id"]
+    categorias = client.get("/categorias").json()
+    assert categoria_creada in categorias
+
+
+def test_e2e_product_for_unknown_category_returns_not_found():
+    response = client.post(
+        "/productos",
+        params={"nombre": "Producto sin categoría", "categoria_id": -1},
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Categoría no encontrada"}
