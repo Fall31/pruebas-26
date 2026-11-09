@@ -18,4 +18,5 @@ python -m pytest --rootdir . -s
 # 6. iniciar pruebas React (desde la carpeta frontend)
 cd frontend
 npm ci
-npm test
+npx playwright install chromium
+npm run test:all
