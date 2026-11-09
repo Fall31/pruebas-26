@@ -15,3 +15,7 @@ uvicorn app.main:app --reload --port 8005
 # 5. iniciar pruebas
 python -m pytest --rootdir . -s
 
+# 6. iniciar pruebas React (desde la carpeta frontend)
+cd frontend
+npm ci
+npm test
